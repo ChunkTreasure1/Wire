@@ -45,7 +45,7 @@ namespace Wire
 		memcpy_s(&myPool[index], sizeof(T), &aComponent, sizeof(T));
 
 		myToEntityMap[aId] = index;
-
+		
 		return *reinterpret_cast<T*>(&myPool[index]);
 	}
 

@@ -6,6 +6,13 @@
 
 struct TestComponent
 {
+    TestComponent() = default;
+    TestComponent(float aX, float aY)
+        : x(aX), y(aY)
+    { }
+
+	std::string name = "TestComponent";
+
     float x, y;
 };
 
@@ -22,15 +29,10 @@ int main()
 		auto ent = registry.CreateEntity();
         myEntities.emplace_back(ent);
 
-		registry.AddComponent<TestComponent>(ent, TestComponent{ 1.0f + i, 2.0f });
+		registry.AddComponent<TestComponent>(ent, TestComponent(0.f, 0.f));
     }
 
     auto& comps = registry.GetAllComponents<TestComponent>();
-
-	for (auto& comp : comps)
-	{
-		std::cout << comp.x << " " << comp.y << std::endl;
-	}
 
 	for (const auto& ent : myEntities)
 	{
