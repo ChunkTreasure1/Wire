@@ -3,9 +3,20 @@
 namespace Wire
 {
 	ComponentPool::ComponentPool(uint32_t aSize)
-		: myComponentSize(aSize)
+		: m_componentSize(aSize)
 	{
-		myPool.reserve(aSize * 100);
+		m_pool.reserve(aSize * 100);
+	}
+
+	void ComponentPool::AddComponent(EntityId aId, const std::vector<uint8_t> data)
+	{
+		assert(!HasComponent(aId));
+		
+		size_t index = m_pool.size();
+		m_pool.resize(m_pool.size() + data.size());
+		memcpy_s(&m_pool[index], data.size(), data.data(), data.size());
+		
+		m_toEntityMap[aId] = index;
 	}
 	
 	void ComponentPool::Defragment()
@@ -14,15 +25,15 @@ namespace Wire
 		EntityId start = 0;
 		EntityId end = 0;
 
-		for (auto it = myToEntityMap.begin(); it != myToEntityMap.end(); it++)
+		for (auto it = m_toEntityMap.begin(); it != m_toEntityMap.end(); it++)
 		{
-			if (std::distance(it, myToEntityMap.end()) < 2)
+			if (std::distance(it, m_toEntityMap.end()) < 2)
 			{
 				break;
 			}
 
 			auto next = std::next(it);
-			if (it->second - next->second > myComponentSize)
+			if (it->second - next->second > m_componentSize)
 			{
 				start = it->first;
 				end = next->first;

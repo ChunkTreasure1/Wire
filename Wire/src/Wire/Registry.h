@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Entity.h"
+#include "GUID.h"
 #include "ComponentPool.hpp"
 
 namespace Wire
@@ -18,6 +19,8 @@ namespace Wire
 		void RemoveEntity(EntityId aId);
 		void Clear();
 
+		void AddComponent(const std::vector<uint8_t> data, const GUID& guid, EntityId aId);
+
 		template<typename T, typename ... Args>
 		T& AddComponent(EntityId aEntity, Args&&... args);
 
@@ -34,26 +37,27 @@ namespace Wire
 		const std::vector<T>& GetAllComponents();
 
 	private:
-		std::unordered_map<size_t, ComponentPool> myPools;
-		EntityId myNextEntityId = 1; // ID zero is null
+		std::unordered_map<GUID, ComponentPool> m_pools;
+		EntityId m_nextEntityId = 1; // ID zero is null
 	};
 	
 	template<typename T, typename ...Args>
 	inline T& Registry::AddComponent(EntityId aEntity, Args && ...args)
 	{
-		size_t typeId = typeid(T).hash_code();
-		auto it = myPools.find(typeId);
-		if (it != myPools.end())
+		const GUID guid = T::comp_guid;
+
+		auto it = m_pools.find(guid);
+		if (it != m_pools.end())
 		{
 			T comp(std::forward<Args>(args)...);
 			return it->second.AddComponent<T>(aEntity, comp);
 		}
 		else
 		{
-			myPools.emplace(typeId, ComponentPool(sizeof(T)));
+			m_pools.emplace(guid, ComponentPool(sizeof(T)));
 			
 			T comp(std::forward<Args>(args)...);
-			return myPools[typeId].AddComponent(aEntity, comp);
+			return m_pools[guid].AddComponent(aEntity, comp);
 		}
 	}
 
@@ -61,24 +65,25 @@ namespace Wire
 	inline T& Registry::GetComponent(EntityId aEntity)
 	{
 		assert(HasComponent<T>());
-		size_t typeId = typeid(T).hash_code();
-		return myPools[typeId].GetComponent<T>(aEntity);
+		const GUID guid = T::comp_guid;
+
+		return m_pools[guid].GetComponent<T>(aEntity);
 	}
 
 	template<typename T>
 	inline bool Registry::HasComponent(EntityId aEntity)
 	{
-		size_t typeId = typeid(T).hash_code();
-		return myPools[typeId].HasComponent(aEntity);
+		const GUID guid = T::comp_guid;
+		return m_pools[guid].HasComponent(aEntity);
 	}
 
 	template<typename T>
 	inline void Registry::RemoveComponent(EntityId aEntity)
 	{
-		size_t typeId = typeid(T).hash_code();
-		
-		auto it = myPools.find(typeId);
-		assert(it != myPools.end());
+		const GUID guid = T::comp_guid;
+
+		auto it = m_pools.find(guid);
+		assert(it != m_pools.end());
 
 		it->second.RemoveComponent(aEntity);
 	}
@@ -86,10 +91,10 @@ namespace Wire
 	template<typename T>
 	inline const std::vector<T>& Registry::GetAllComponents()
 	{
-		size_t typeId = typeid(T).hash_code();
+		const GUID guid = T::comp_guid;
 		
-		auto it = myPools.find(typeId);
-		assert(it != myPools.end());
+		auto it = m_pools.find(guid);
+		assert(it != m_pools.end());
 
 		return reinterpret_cast<const std::vector<T>&>(it->second.GetAllComponents());
 	}
