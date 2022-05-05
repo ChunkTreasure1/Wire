@@ -40,18 +40,5 @@ int main()
     Wire::Registry registry;
 	auto ent = registry.CreateEntity();
 
-	auto& comp = registry.AddComponent<TestComponent>(ent);
-	comp.x = 5.f;
-	comp.y = 10.f;
-
-
-	Wire::Registry newRegistry(registry);
-	
-	comp.x = 10.f;
-	comp.y = 3.f;
-
-	auto& newComp = newRegistry.GetComponent<TestComponent>(ent);
-	std::cout << "x: " << newComp.x << " y: " << newComp.y << std::endl;
-
     system("pause");
 } 

@@ -18,6 +18,11 @@ namespace Wire
 		EntityId CreateEntity();
 		EntityId AddEntity(EntityId aId);
 
+		void AddChild(EntityId parent, EntityId child);
+		void RemoveChild(EntityId parent, EntityId child);
+
+		const std::vector<EntityId>& GetChildren(EntityId parent) const;
+
 		void RemoveEntity(EntityId aId);
 		void Clear();
 
@@ -52,9 +57,11 @@ namespace Wire
 
 	private:
 		std::unordered_map<GUID, ComponentPool> m_pools;
-		EntityId m_nextEntityId = 1; // ID zero is null
+		std::unordered_map<EntityId, std::vector<EntityId>> m_childEntities;
 
+		EntityId m_nextEntityId = 1; // ID zero is null
 		std::vector<EntityId> m_availiableIds;
+		std::vector<EntityId> m_usedIds;
 	};
 	
 	template<typename T, typename ...Args>

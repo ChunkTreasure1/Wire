@@ -10,7 +10,7 @@ namespace Wire
 		m_availiableIds = registry.m_availiableIds;
 		m_pools = registry.m_pools;
 	}
-	
+
 	Registry::~Registry()
 	{
 		Clear();
@@ -24,27 +24,70 @@ namespace Wire
 			id = m_availiableIds.back();
 			m_availiableIds.pop_back();
 		}
+		else
+		{
+			id = m_nextEntityId++;
+		}
+		
+		m_usedIds.emplace_back(id);
 
-		id = m_nextEntityId++;
 		return id;
 	}
 
 	EntityId Registry::AddEntity(EntityId aId)
 	{
 		assert(aId != 0);
+		assert(std::find(m_usedIds.begin(), m_usedIds.end(), aId) == m_usedIds.end());
 
 		if (m_nextEntityId <= aId)
 		{
 			m_nextEntityId = aId + 1;
 		}
 
+		m_usedIds.emplace_back(aId);
+
 		return aId;
+	}
+
+	void Registry::AddChild(EntityId parent, EntityId child)
+	{
+		assert(std::find(m_usedIds.begin(), m_usedIds.end(), parent) != m_usedIds.end());
+		assert(std::find(m_usedIds.begin(), m_usedIds.end(), child) != m_usedIds.end());
+
+		auto& children = m_childEntities[parent];
+		if (std::find(children.begin(), children.end(), child) == children.end())
+		{
+			children.emplace_back(child);
+		}
+	}
+
+
+	void Registry::RemoveChild(EntityId parent, EntityId child)
+	{
+		assert(std::find(m_usedIds.begin(), m_usedIds.end(), parent) != m_usedIds.end());
+		assert(std::find(m_usedIds.begin(), m_usedIds.end(), child) != m_usedIds.end());
+
+		auto& children = m_childEntities[parent];
+		if (auto it = std::find(children.begin(), children.end(), child); it != children.end())
+		{
+			children.erase(it);
+		}
+	}
+
+	const std::vector<EntityId>& Registry::GetChildren(EntityId parent) const
+	{
+		assert(m_childEntities.find(parent) != m_childEntities.end());
+		return m_childEntities.at(parent);
 	}
 
 	void Registry::RemoveEntity(EntityId aId)
 	{
 		assert(aId != 0);
 		assert(std::find(m_availiableIds.begin(), m_availiableIds.end(), aId) == m_availiableIds.end());
+		assert(std::find(m_usedIds.begin(), m_usedIds.end(), aId) != m_usedIds.end());
+
+		auto it = std::find(m_usedIds.begin(), m_usedIds.end(), aId);
+		m_usedIds.erase(it);
 
 		for (auto& compPool : m_pools)
 		{
@@ -53,12 +96,15 @@ namespace Wire
 				compPool.second.RemoveComponent(aId);
 			}
 		}
+
+		m_availiableIds.emplace_back(aId);
 	}
 
 	void Registry::Clear()
 	{
 		m_pools.clear();
 		m_availiableIds.clear();
+		m_usedIds.clear();
 		m_nextEntityId = 1;
 	}
 
