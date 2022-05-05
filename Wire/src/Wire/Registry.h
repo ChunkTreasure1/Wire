@@ -15,7 +15,7 @@ namespace Wire
 		~Registry();
 
 		EntityId CreateEntity();
-		EntityId CreateEntity(EntityId aId);
+		EntityId AddEntity(EntityId aId);
 
 		void RemoveEntity(EntityId aId);
 		void Clear();
@@ -46,9 +46,14 @@ namespace Wire
 		template<typename T>
 		const std::vector<T>& GetAllComponents() const;
 
+		template<typename T>
+		const std::vector<EntityId>& GetComponentView() const;
+
 	private:
 		std::unordered_map<GUID, ComponentPool> m_pools;
 		EntityId m_nextEntityId = 1; // ID zero is null
+
+		std::vector<EntityId> m_availiableIds;
 	};
 	
 	template<typename T, typename ...Args>
@@ -107,5 +112,16 @@ namespace Wire
 		assert(it != m_pools.end());
 
 		return reinterpret_cast<const std::vector<T>&>(it->second.GetAllComponents());
+	}
+	
+	template<typename T>
+	inline const std::vector<EntityId>& Registry::GetComponentView() const
+	{
+		const GUID guid = T::comp_guid;
+
+		auto& it = m_pools.find(guid);
+		assert(it != m_pools.end());
+
+		return it->second.GetComponentView();
 	}
 }

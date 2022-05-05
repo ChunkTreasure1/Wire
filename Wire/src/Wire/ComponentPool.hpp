@@ -31,10 +31,12 @@ namespace Wire
 
 		inline const std::vector<uint8_t>& GetAllComponents() const { return m_pool; }
 		inline const uint32_t GetComponentSize() const { return m_componentSize; }
+		inline const std::vector<EntityId>& GetComponentView() const { return m_entitiesWithComponent; }
 
 	private:
 		uint32_t m_componentSize = 0;
 		std::vector<uint8_t> m_pool;
+		std::vector<EntityId> m_entitiesWithComponent;
 		std::unordered_map<EntityId, size_t> m_toEntityMap;
 	};
 
@@ -49,7 +51,8 @@ namespace Wire
 		memcpy_s(&m_pool[index], sizeof(T), &aComponent, sizeof(T));
 
 		m_toEntityMap[aId] = index;
-		
+		m_entitiesWithComponent.emplace_back(aId);
+
 		return *reinterpret_cast<T*>(&m_pool[index]);
 	}
 
@@ -72,6 +75,7 @@ namespace Wire
 			}
 		}
 
+		m_entitiesWithComponent.erase(std::find(m_entitiesWithComponent.begin(), m_entitiesWithComponent.end(), aId));
 		m_toEntityMap.erase(it);
 	}
 

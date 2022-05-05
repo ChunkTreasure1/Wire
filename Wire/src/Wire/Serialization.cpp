@@ -24,6 +24,8 @@ namespace Wire
 				return it.first;
 			}
 		}
+
+		return "Null";
 	}
 
 	const ComponentRegistry::RegistrationInfo& ComponentRegistry::GetRegistryDataFromName(const std::string& aName)
@@ -77,7 +79,7 @@ namespace Wire
 		size_t offset = 0;
 
 		const EntityId id = *reinterpret_cast<EntityId*>(&totalData[offset]);
-		aRegistry.CreateEntity(id);
+		aRegistry.AddEntity(id);
 
 		offset += sizeof(EntityId);
 

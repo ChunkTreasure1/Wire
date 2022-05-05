@@ -11,11 +11,21 @@ namespace Wire
 
 	EntityId Registry::CreateEntity()
 	{
-		return m_nextEntityId++;
+		EntityId id;
+		if (!m_availiableIds.empty())
+		{
+			id = m_availiableIds.back();
+			m_availiableIds.pop_back();
+		}
+
+		id = m_nextEntityId++;
+		return id;
 	}
 
-	EntityId Registry::CreateEntity(EntityId aId)
+	EntityId Registry::AddEntity(EntityId aId)
 	{
+		assert(aId != 0);
+
 		if (m_nextEntityId <= aId)
 		{
 			m_nextEntityId = aId + 1;
@@ -23,9 +33,12 @@ namespace Wire
 
 		return aId;
 	}
-	
+
 	void Registry::RemoveEntity(EntityId aId)
 	{
+		assert(aId != 0);
+		assert(std::find(m_availiableIds.begin(), m_availiableIds.end(), aId) == m_availiableIds.end());
+
 		for (auto& compPool : m_pools)
 		{
 			if (compPool.second.HasComponent(aId))
@@ -38,6 +51,7 @@ namespace Wire
 	void Registry::Clear()
 	{
 		m_pools.clear();
+		m_availiableIds.clear();
 		m_nextEntityId = 1;
 	}
 
@@ -50,7 +64,7 @@ namespace Wire
 		}
 		else
 		{
-			m_pools.emplace(guid, ComponentPool(data.size()));
+			m_pools.emplace(guid, ComponentPool((uint32_t)data.size()));
 			m_pools[guid].AddComponent(aId, data);
 		}
 	}
@@ -67,7 +81,7 @@ namespace Wire
 				const uint32_t componentSize = pool.second.GetComponentSize();
 
 				data.resize(data.size() + componentSize);
-			
+
 				std::vector<uint8_t> componentData = pool.second.GetComponentData(id);
 				memcpy_s(&data[size], componentSize, componentData.data(), componentSize);
 			}
@@ -78,7 +92,7 @@ namespace Wire
 	std::vector<uint8_t> Registry::GetEntityComponentDataEncoded(EntityId id) const
 	{
 		std::vector<uint8_t> data;
-		
+
 		for (const auto& pool : m_pools)
 		{
 			if (pool.second.HasComponent(id))
@@ -88,9 +102,9 @@ namespace Wire
 
 				size_t size = data.size();
 				const uint32_t componentSize = pool.second.GetComponentSize();
-				
+
 				data.resize(data.size() + sizeof(uint16_t) + nameSize + componentSize);
-				
+
 				std::vector<uint8_t> componentData = pool.second.GetComponentData(id);
 
 				memcpy_s(&data[size], sizeof(uint16_t), &nameSize, sizeof(uint16_t));

@@ -17,5 +17,6 @@ namespace Wire
 		memcpy_s(&m_pool[index], data.size(), data.data(), data.size());
 		
 		m_toEntityMap[aId] = index;
+		m_entitiesWithComponent.emplace_back(aId);
 	}	
 }

@@ -2,6 +2,7 @@
 //
 
 #include <iostream>
+#include <chrono>
 
 #include "Wire/Registry.h"
 #include "Wire/Serialization.h"
@@ -37,11 +38,7 @@ int main()
     std::cout << "Hello World!\n";
 
     Wire::Registry registry;
-    
-    Wire::EntityId id = Wire::Serializer::DeserializeEntityToRegistry("Entity.ent", registry);
-	
-    auto& comp = registry.GetComponent<TestComponent>(id);
-    std::cout << comp.x << " " << comp.y << std::endl;
+   
 	
     system("pause");
 } 
