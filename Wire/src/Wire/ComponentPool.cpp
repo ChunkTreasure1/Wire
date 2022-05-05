@@ -17,33 +17,5 @@ namespace Wire
 		memcpy_s(&m_pool[index], data.size(), data.data(), data.size());
 		
 		m_toEntityMap[aId] = index;
-	}
-	
-	void ComponentPool::Defragment()
-	{
-		// TODO: implement
-		EntityId start = 0;
-		EntityId end = 0;
-
-		for (auto it = m_toEntityMap.begin(); it != m_toEntityMap.end(); it++)
-		{
-			if (std::distance(it, m_toEntityMap.end()) < 2)
-			{
-				break;
-			}
-
-			auto next = std::next(it);
-			if (it->second - next->second > m_componentSize)
-			{
-				start = it->first;
-				end = next->first;
-				break;
-			}
-		}
-
-		if (start != end)
-		{
-			
-		}
-	}
+	}	
 }

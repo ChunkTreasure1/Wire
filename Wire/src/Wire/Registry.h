@@ -15,11 +15,21 @@ namespace Wire
 		~Registry();
 
 		EntityId CreateEntity();
+		EntityId CreateEntity(EntityId aId);
 
 		void RemoveEntity(EntityId aId);
 		void Clear();
 
-		void AddComponent(const std::vector<uint8_t> data, const GUID& guid, EntityId aId);
+		void AddComponent(const std::vector<uint8_t> data, const GUID& guid, EntityId id);
+		std::vector<uint8_t> GetEntityComponentData(EntityId id) const;
+		
+		/*
+		* First 2 bytes: The length of the name
+		* Next X bytes: The name of the component
+		* Next X bytes: The data of the component
+		*/
+		std::vector<uint8_t> GetEntityComponentDataEncoded(EntityId id) const;
+		const uint32_t GetComponentCount(EntityId aId) const;
 
 		template<typename T, typename ... Args>
 		T& AddComponent(EntityId aEntity, Args&&... args);
@@ -28,13 +38,13 @@ namespace Wire
 		T& GetComponent(EntityId aEntity);
 
 		template<typename T>
-		bool HasComponent(EntityId aEntity);
+		bool HasComponent(EntityId aEntity) const;
 
 		template<typename T>
 		void RemoveComponent(EntityId aEntity);
 
 		template<typename T>
-		const std::vector<T>& GetAllComponents();
+		const std::vector<T>& GetAllComponents() const;
 
 	private:
 		std::unordered_map<GUID, ComponentPool> m_pools;
@@ -64,17 +74,17 @@ namespace Wire
 	template<typename T>
 	inline T& Registry::GetComponent(EntityId aEntity)
 	{
-		assert(HasComponent<T>());
+		assert(HasComponent<T>(aEntity));
 		const GUID guid = T::comp_guid;
 
-		return m_pools[guid].GetComponent<T>(aEntity);
+		return m_pools.at(guid).GetComponent<T>(aEntity);
 	}
 
 	template<typename T>
-	inline bool Registry::HasComponent(EntityId aEntity)
+	inline bool Registry::HasComponent(EntityId aEntity) const
 	{
 		const GUID guid = T::comp_guid;
-		return m_pools[guid].HasComponent(aEntity);
+		return m_pools.at(guid).HasComponent(aEntity);
 	}
 
 	template<typename T>
@@ -89,7 +99,7 @@ namespace Wire
 	}
 	
 	template<typename T>
-	inline const std::vector<T>& Registry::GetAllComponents()
+	inline const std::vector<T>& Registry::GetAllComponents() const
 	{
 		const GUID guid = T::comp_guid;
 		

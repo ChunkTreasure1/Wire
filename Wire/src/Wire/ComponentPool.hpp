@@ -24,13 +24,15 @@ namespace Wire
 		template<typename T>
 		T& GetComponent(EntityId aId);
 
-		bool HasComponent(EntityId aId);
+		// Copies the data
+		std::vector<uint8_t> GetComponentData(EntityId aId) const;
+		
+		bool HasComponent(EntityId aId) const;
 
-		inline const std::vector<uint8_t>& GetAllComponents() { return m_pool; }
+		inline const std::vector<uint8_t>& GetAllComponents() const { return m_pool; }
+		inline const uint32_t GetComponentSize() const { return m_componentSize; }
 
 	private:
-		void Defragment();
-
 		uint32_t m_componentSize = 0;
 		std::vector<uint8_t> m_pool;
 		std::unordered_map<EntityId, size_t> m_toEntityMap;
@@ -76,11 +78,21 @@ namespace Wire
 	template<typename T>
 	inline T& ComponentPool::GetComponent(EntityId aId)
 	{
-		assert(HasComponent<T>(aId));
-		return *reinterpret_cast<T*>(&m_pool[m_toEntityMap[aId]]);
+		assert(HasComponent(aId));
+		return *reinterpret_cast<T*>(&m_pool.at(m_toEntityMap.at(aId)));
 	}
 
-	inline bool ComponentPool::HasComponent(EntityId aId)
+	inline std::vector<uint8_t> ComponentPool::GetComponentData(EntityId aId) const
+	{
+		assert(HasComponent(aId));
+		std::vector<uint8_t> data;
+		data.resize(m_componentSize);
+
+		memcpy_s(data.data(), m_componentSize, &m_pool[m_toEntityMap.at(aId)], m_componentSize);
+		return data;
+	}
+
+	inline bool ComponentPool::HasComponent(EntityId aId) const
 	{
 		auto it = m_toEntityMap.find(aId);
 		return it != m_toEntityMap.end();
