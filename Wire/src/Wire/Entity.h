@@ -5,5 +5,5 @@
 namespace Wire
 {
 	typedef uint32_t EntityId;
-	static const EntityId Null = 0;
+	static const EntityId NullID = 0;
 }

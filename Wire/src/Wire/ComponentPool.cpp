@@ -2,6 +2,14 @@
 
 namespace Wire
 {
+	ComponentPool::ComponentPool(const ComponentPool& pool)
+	{
+		m_componentSize = pool.m_componentSize;
+		m_pool = pool.m_pool;
+		m_entitiesWithComponent = pool.m_entitiesWithComponent;
+		m_toEntityMap = pool.m_toEntityMap;
+	}
+
 	ComponentPool::ComponentPool(uint32_t aSize)
 		: m_componentSize(aSize)
 	{

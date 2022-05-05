@@ -12,6 +12,7 @@ namespace Wire
 	{
 	public:
 		Registry() = default;
+		Registry(const Registry& registry);
 		~Registry();
 
 		EntityId CreateEntity();

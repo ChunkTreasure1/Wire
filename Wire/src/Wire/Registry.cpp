@@ -4,6 +4,13 @@
 
 namespace Wire
 {
+	Registry::Registry(const Registry& registry)
+	{
+		m_nextEntityId = registry.m_nextEntityId;
+		m_availiableIds = registry.m_availiableIds;
+		m_pools = registry.m_pools;
+	}
+	
 	Registry::~Registry()
 	{
 		Clear();

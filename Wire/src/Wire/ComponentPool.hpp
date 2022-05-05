@@ -12,6 +12,7 @@ namespace Wire
 	{
 	public:
 		ComponentPool() = default;
+		ComponentPool(const ComponentPool& pool);
 		ComponentPool(uint32_t aSize);
 
 		void AddComponent(EntityId aId, const std::vector<uint8_t> data);
