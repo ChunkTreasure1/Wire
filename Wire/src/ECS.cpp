@@ -23,8 +23,7 @@ struct OtherComponent
 	OtherComponent() = default;
 	OtherComponent(float aX, float aY)
 		: x(aX), y(aY)
-	{
-	}
+	{}
 
 	float x, y;
 	SERIALIZE_COMPONENT(OtherComponent, "{4709522E-FB7B-4B85-8FDD-C31853A89FF3}"_guid);
@@ -39,6 +38,8 @@ int main()
 
     Wire::Registry registry;
 	auto ent = registry.CreateEntity();
+
+	registry.AddComponent<TestComponent>(ent);
 
     system("pause");
 } 
