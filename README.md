@@ -24,7 +24,7 @@ Components are simple POD structs which are registered and given a GUID. Example
 Serialization and deserialization is done using the `Wire::Serializer` class and is quite easy to use. Example:
  
 
-    Wire::Serializer::SerializeEntityToFile(ent, registry);
+    Wire::Serializer::SerializeEntityToFile(ent, registry, "Scene");
 	Wire::Serializer::DeserializeEntityToRegistry("Entity.ent", registry);
 
 
