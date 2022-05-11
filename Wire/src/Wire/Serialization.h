@@ -7,7 +7,7 @@
 #include <filesystem>
 
 #define SERIALIZE_COMPONENT(type, guid) inline static constexpr GUID comp_guid = guid;
-#define REGISTER_COMPONENT(type) inline static bool type##_reg = Wire::ComponentRegistry::Register(###type, { type::comp_guid, sizeof(type) });
+#define REGISTER_COMPONENT(type) inline static bool type##_reg = Wire::ComponentRegistry::Register(#type, { type::comp_guid, sizeof(type) });
 
 namespace Wire
 {
@@ -39,7 +39,7 @@ namespace Wire
 		* Next 4 bytes: the component count
 		* The rest: The components and it's data
 		*/
-		static void SerializeEntityToFile(EntityId aId, const Registry& aRegistry);
+		static void SerializeEntityToFile(EntityId aId, const Registry& aRegistry, const std::filesystem::path& aSceneFolder);
 		static EntityId DeserializeEntityToRegistry(const std::filesystem::path& aPath, Registry& aRegistry);
 	};
 }

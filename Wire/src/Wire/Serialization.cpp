@@ -1,6 +1,7 @@
 #include "Serialization.h"
 
 #include <fstream>
+#include <string>
 
 namespace Wire
 {
@@ -45,7 +46,7 @@ namespace Wire
 		return impl;
 	}
 	
-	void Serializer::SerializeEntityToFile(EntityId aId, const Registry& aRegistry)
+	void Serializer::SerializeEntityToFile(EntityId aId, const Registry& aRegistry, const std::filesystem::path& aSceneFolder)
 	{
 		std::vector<uint8_t> data;
 		const std::vector<uint8_t> encodedComponentData = aRegistry.GetEntityComponentDataEncoded(aId);
@@ -57,7 +58,14 @@ namespace Wire
 		memcpy_s(&data[sizeof(EntityId)], sizeof(uint32_t), &componentCount, sizeof(uint32_t));
 		memcpy_s(&data[sizeof(EntityId) + sizeof(uint32_t)], encodedComponentData.size(), encodedComponentData.data(), encodedComponentData.size());
 	
-		std::ofstream file("Entity.ent", std::ios::binary);
+		if (!std::filesystem::exists(aSceneFolder))
+		{
+			std::filesystem::create_directories(aSceneFolder);
+		}
+
+		std::filesystem::path finalPath = aSceneFolder / (std::string("Entity_") + std::to_string(aId) + ".ent");
+
+		std::ofstream file(finalPath, std::ios::binary);
 		file.write(reinterpret_cast<char*>(data.data()), data.size());
 		file.close();
 	}

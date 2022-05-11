@@ -39,6 +39,9 @@ int main()
     Wire::Registry registry;
 	auto ent = registry.CreateEntity();
 
+	Wire::Serializer::SerializeEntityToFile(ent, registry, "Scene");
+	Wire::Serializer::DeserializeEntityToRegistry("Entity.ent", registry);
+
 	registry.AddComponent<TestComponent>(ent);
 
     system("pause");
