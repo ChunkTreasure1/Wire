@@ -28,3 +28,6 @@ Serialization and deserialization is done using the `Wire::Serializer` class and
 	Wire::Serializer::DeserializeEntityToRegistry("Entity.ent", registry);
 
 
+
+## TODO:
+* Remove name from serialization
