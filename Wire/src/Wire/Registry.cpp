@@ -108,7 +108,7 @@ namespace Wire
 		m_nextEntityId = 1;
 	}
 
-	void Registry::AddComponent(const std::vector<uint8_t> data, const GUID& guid, EntityId aId)
+	void Registry::AddComponent(const std::vector<uint8_t> data, const WireGUID& guid, EntityId aId)
 	{
 		auto it = m_pools.find(guid);
 		if (it != m_pools.end())

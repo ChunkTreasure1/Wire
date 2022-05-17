@@ -16,7 +16,7 @@ namespace Wire
 		return false;
 	}
 
-	const std::string ComponentRegistry::GetNameFromGUID(const GUID& aGuid)
+	const std::string ComponentRegistry::GetNameFromGUID(const WireGUID& aGuid)
 	{
 		for (const auto& it : ComponentGUIDs())
 		{

@@ -4,41 +4,41 @@
 #include <xhash>
 
 	// Based on CryEngines CryGUID
-	struct GUID
+	struct WireGUID
 	{
-		constexpr GUID()
+		constexpr WireGUID()
 			: hiPart(0), loPart(0)
 		{ }
 
-		constexpr GUID(const GUID& rhs) 
+		constexpr WireGUID(const WireGUID& rhs) 
 			: hiPart(rhs.hiPart), loPart(rhs.loPart)
 		{ }
 
-		constexpr GUID(const uint64_t& hi, const uint64_t& lo)
+		constexpr WireGUID(const uint64_t& hi, const uint64_t& lo)
 		: hiPart(hi), loPart(lo)
 		{ }
 
-		constexpr static GUID Construct(uint32_t d1, uint16_t d2, uint16_t d3,
+		constexpr static WireGUID Construct(uint32_t d1, uint16_t d2, uint16_t d3,
 			uint8_t d4_0, uint8_t d4_1, uint8_t d4_2, uint8_t d4_3, uint8_t d4_4, uint8_t d4_5, uint8_t d4_6, uint8_t d4_7)
 		{
-			return GUID(
+			return WireGUID(
 				(((uint64_t)d3) << 48) | (((uint64_t)d2) << 32) | ((uint64_t)d1),  //high part
 				(((uint64_t)d4_7) << 56) | (((uint64_t)d4_6) << 48) | (((uint64_t)d4_5) << 40) | (((uint64_t)d4_4) << 32) | (((uint64_t)d4_3) << 24) | (((uint64_t)d4_2) << 16) | (((uint64_t)d4_1) << 8) | (uint64_t)d4_0   //low part
 			);
 		}
 
-		constexpr static GUID Null()
+		constexpr static WireGUID Null()
 		{
-			return GUID(0, 0);
+			return WireGUID(0, 0);
 		}
 
 		constexpr bool IsNull() const { return hiPart == 0 && hiPart == 0; }
-		constexpr bool operator==(const GUID& rhs) const { return hiPart == rhs.hiPart && loPart == rhs.loPart; }
-		constexpr bool operator!=(const GUID& rhs) const { return hiPart != rhs.hiPart || loPart != rhs.loPart; }
-		constexpr bool operator<(const GUID& rhs) const { return hiPart < rhs.hiPart || ((hiPart == rhs.hiPart) && loPart < rhs.loPart); }
-		constexpr bool operator>(const GUID& rhs) const { return hiPart > rhs.hiPart || ((hiPart == rhs.hiPart) && loPart > rhs.loPart); }
-		constexpr bool operator<=(const GUID& rhs) const { return hiPart < rhs.hiPart || ((hiPart == rhs.hiPart) && loPart <= rhs.loPart); }
-		constexpr bool operator>=(const GUID& rhs) const { return hiPart > rhs.hiPart || ((hiPart == rhs.hiPart) && loPart >= rhs.loPart); }
+		constexpr bool operator==(const WireGUID& rhs) const { return hiPart == rhs.hiPart && loPart == rhs.loPart; }
+		constexpr bool operator!=(const WireGUID& rhs) const { return hiPart != rhs.hiPart || loPart != rhs.loPart; }
+		constexpr bool operator<(const WireGUID& rhs) const { return hiPart < rhs.hiPart || ((hiPart == rhs.hiPart) && loPart < rhs.loPart); }
+		constexpr bool operator>(const WireGUID& rhs) const { return hiPart > rhs.hiPart || ((hiPart == rhs.hiPart) && loPart > rhs.loPart); }
+		constexpr bool operator<=(const WireGUID& rhs) const { return hiPart < rhs.hiPart || ((hiPart == rhs.hiPart) && loPart <= rhs.loPart); }
+		constexpr bool operator>=(const WireGUID& rhs) const { return hiPart > rhs.hiPart || ((hiPart == rhs.hiPart) && loPart >= rhs.loPart); }
 
 		struct StringUtils
 		{
@@ -86,9 +86,9 @@
 			}
 		};
 
-		constexpr static GUID FromStringInternal(const char* string)
+		constexpr static WireGUID FromStringInternal(const char* string)
 		{
-			return GUID::Construct
+			return WireGUID::Construct
 			(
 				StringUtils::HexStringToUInt32(string),
 				StringUtils::HexStringToUInt16(string + 9),
@@ -108,17 +108,17 @@
 		uint64_t loPart;
 	};
 
-	constexpr GUID operator"" _guid(const char* input, size_t)
+	constexpr WireGUID operator"" _guid(const char* input, size_t)
 	{
-		return (input[0] == '{') ? GUID::FromStringInternal(input + 1) : GUID::FromStringInternal(input);
+		return (input[0] == '{') ? WireGUID::FromStringInternal(input + 1) : WireGUID::FromStringInternal(input);
 	}
 
 namespace std
 {
 	template<>
-	struct hash<GUID>
+	struct hash<WireGUID>
 	{
-		size_t operator()(const GUID& guid) const
+		size_t operator()(const WireGUID& guid) const
 		{
 			std::hash<uint64_t> hasher;
 			return hasher(guid.loPart) ^ hasher(guid.hiPart);

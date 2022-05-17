@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Entity.h"
-#include "GUID.h"
+#include "WireGUID.h"
 #include "ComponentPool.hpp"
 
 namespace Wire
@@ -26,7 +26,7 @@ namespace Wire
 		void RemoveEntity(EntityId aId);
 		void Clear();
 
-		void AddComponent(const std::vector<uint8_t> data, const GUID& guid, EntityId id);
+		void AddComponent(const std::vector<uint8_t> data, const WireGUID& guid, EntityId id);
 		std::vector<uint8_t> GetEntityComponentData(EntityId id) const;
 		
 		/*
@@ -56,7 +56,7 @@ namespace Wire
 		const std::vector<EntityId>& GetComponentView() const;
 
 	private:
-		std::unordered_map<GUID, ComponentPool> m_pools;
+		std::unordered_map<WireGUID, ComponentPool> m_pools;
 		std::unordered_map<EntityId, std::vector<EntityId>> m_childEntities;
 
 		EntityId m_nextEntityId = 1; // ID zero is null
@@ -67,7 +67,7 @@ namespace Wire
 	template<typename T, typename ...Args>
 	inline T& Registry::AddComponent(EntityId aEntity, Args && ...args)
 	{
-		const GUID guid = T::comp_guid;
+		const WireGUID guid = T::comp_guid;
 
 		auto it = m_pools.find(guid);
 		if (it != m_pools.end())
@@ -88,7 +88,7 @@ namespace Wire
 	inline T& Registry::GetComponent(EntityId aEntity)
 	{
 		assert(HasComponent<T>(aEntity));
-		const GUID guid = T::comp_guid;
+		const WireGUID guid = T::comp_guid;
 
 		return m_pools.at(guid).GetComponent<T>(aEntity);
 	}
@@ -96,14 +96,14 @@ namespace Wire
 	template<typename T>
 	inline bool Registry::HasComponent(EntityId aEntity) const
 	{
-		const GUID guid = T::comp_guid;
+		const WireGUID guid = T::comp_guid;
 		return m_pools.at(guid).HasComponent(aEntity);
 	}
 
 	template<typename T>
 	inline void Registry::RemoveComponent(EntityId aEntity)
 	{
-		const GUID guid = T::comp_guid;
+		const WireGUID guid = T::comp_guid;
 
 		auto it = m_pools.find(guid);
 		assert(it != m_pools.end());
@@ -114,7 +114,7 @@ namespace Wire
 	template<typename T>
 	inline const std::vector<T>& Registry::GetAllComponents() const
 	{
-		const GUID guid = T::comp_guid;
+		const WireGUID guid = T::comp_guid;
 		
 		auto it = m_pools.find(guid);
 		assert(it != m_pools.end());
@@ -125,7 +125,7 @@ namespace Wire
 	template<typename T>
 	inline const std::vector<EntityId>& Registry::GetComponentView() const
 	{
-		const GUID guid = T::comp_guid;
+		const WireGUID guid = T::comp_guid;
 
 		auto& it = m_pools.find(guid);
 		assert(it != m_pools.end());
