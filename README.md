@@ -31,3 +31,4 @@ Serialization and deserialization is done using the `Wire::Serializer` class and
 
 ## TODO:
 * Remove name from serialization
+* Implement backwards compatability
