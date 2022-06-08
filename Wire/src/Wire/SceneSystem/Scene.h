@@ -12,13 +12,15 @@ public:
 	Scene(const std::string& name);
 	Scene(const Scene& scene);
 
+	void OnRuntimeStart();
+	void OnRuntimeEnd();
+
 	Entity CreateEntity();
 	void RemoveEntity(const Entity& entity);
 
-private:
-	friend class Entity;
+	inline Wire::Registry& GetRegistry() { return m_registry; }
 
+private:
 	std::string m_name;
 	Wire::Registry m_registry;
-	std::vector<Entity> m_entities;
 };

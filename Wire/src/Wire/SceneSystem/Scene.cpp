@@ -9,9 +9,13 @@ Scene::Scene(const std::string& name)
 Scene::Scene(const Scene& scene)
 {
 	m_name = scene.m_name;
-	m_entities = scene.m_entities;
-	
 }
+
+void Scene::OnRuntimeStart()
+{}
+
+void Scene::OnRuntimeEnd()
+{}
 
 Entity Scene::CreateEntity()
 {
@@ -21,9 +25,5 @@ Entity Scene::CreateEntity()
 
 void Scene::RemoveEntity(const Entity& entity)
 {
-	if (auto it = std::find(m_entities.begin(), m_entities.end(), entity); it != m_entities.end())
-	{
-		m_registry.RemoveEntity(it->GetId());
-		m_entities.erase(it);
-	}
+	m_registry.RemoveEntity(entity.GetId());
 }
