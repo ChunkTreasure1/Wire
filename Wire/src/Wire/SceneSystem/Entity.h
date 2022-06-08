@@ -1,10 +1,11 @@
 #pragma once
 
-#include "Wire/Entity.h"
+#include "Wire/ECS/Entity.h"
+
+#include "Wire/SceneSystem/Scene.h"
 
 #include <vector>
 
-class Scene;
 class Entity
 {
 public:

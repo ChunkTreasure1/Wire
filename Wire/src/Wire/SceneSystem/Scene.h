@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Wire/Registry.h"
+#include "Wire/ECS/Registry.h"
 
 #include <string>
 
