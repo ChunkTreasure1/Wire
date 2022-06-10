@@ -127,7 +127,7 @@ namespace Wire
 	{
 		const WireGUID guid = T::comp_guid;
 
-		auto& it = m_pools.find(guid);
+		auto it = m_pools.find(guid);
 		if (it != m_pools.end())
 		{
 			return it->second.GetComponentView();
