@@ -28,7 +28,7 @@ namespace Wire
 
 		void AddComponent(const std::vector<uint8_t> data, const WireGUID& guid, EntityId id);
 		std::vector<uint8_t> GetEntityComponentData(EntityId id) const;
-		
+
 		/*
 		* First 2 bytes: The length of the name
 		* Next X bytes: The name of the component
@@ -53,7 +53,7 @@ namespace Wire
 		const std::vector<T>& GetAllComponents() const;
 
 		template<typename T>
-		const std::vector<EntityId>& GetComponentView() const;
+		const std::vector<EntityId> GetComponentView() const;
 
 	private:
 		std::unordered_map<WireGUID, ComponentPool> m_pools;
@@ -63,7 +63,7 @@ namespace Wire
 		std::vector<EntityId> m_availiableIds;
 		std::vector<EntityId> m_usedIds;
 	};
-	
+
 	template<typename T, typename ...Args>
 	inline T& Registry::AddComponent(EntityId aEntity, Args && ...args)
 	{
@@ -78,7 +78,7 @@ namespace Wire
 		else
 		{
 			m_pools.emplace(guid, ComponentPool(sizeof(T)));
-			
+
 			T comp(std::forward<Args>(args)...);
 			return m_pools[guid].AddComponent(aEntity, comp);
 		}
@@ -110,26 +110,29 @@ namespace Wire
 
 		it->second.RemoveComponent(aEntity);
 	}
-	
+
 	template<typename T>
 	inline const std::vector<T>& Registry::GetAllComponents() const
 	{
 		const WireGUID guid = T::comp_guid;
-		
+
 		auto it = m_pools.find(guid);
 		assert(it != m_pools.end());
 
 		return reinterpret_cast<const std::vector<T>&>(it->second.GetAllComponents());
 	}
-	
+
 	template<typename T>
-	inline const std::vector<EntityId>& Registry::GetComponentView() const
+	inline const std::vector<EntityId> Registry::GetComponentView() const
 	{
 		const WireGUID guid = T::comp_guid;
 
 		auto& it = m_pools.find(guid);
-		assert(it != m_pools.end());
+		if (it != m_pools.end())
+		{
+			return it->second.GetComponentView();
+		}
 
-		return it->second.GetComponentView();
+		return std::vector<EntityId>();
 	}
 }
