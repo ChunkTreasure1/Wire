@@ -44,7 +44,7 @@ private:
 template<typename T>
 inline T& Entity::GetComponent()
 {
-	m_scene->m_registry.GetComponent<T>(m_id);
+	return m_scene->m_registry.GetComponent<T>(m_id);
 }
 
 template<typename T>
