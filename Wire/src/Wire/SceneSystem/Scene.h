@@ -21,6 +21,8 @@ public:
 	inline Wire::Registry& GetRegistry() { return m_registry; }
 
 private:
+	friend class Entity;
+
 	std::string m_name;
 	Wire::Registry m_registry;
 };
