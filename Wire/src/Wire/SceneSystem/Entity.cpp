@@ -18,10 +18,6 @@ Entity::Entity(const Entity& entity)
 
 Entity::~Entity()
 {
-	if (m_scene)
-	{
-		m_scene->RemoveEntity(*this);
-	}
 }
 
 Entity& Entity::operator=(const Entity& entity)
