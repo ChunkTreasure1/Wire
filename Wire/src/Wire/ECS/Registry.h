@@ -52,6 +52,9 @@ namespace Wire
 		template<typename T>
 		const std::vector<T>& GetAllComponents() const;
 
+		std::unordered_map<WireGUID, std::vector<uint8_t>> GetComponents(EntityId aEntity) const;
+		void SetComponents(const std::unordered_map<WireGUID, std::vector<uint8_t>>& components, EntityId aEntity);
+
 		template<typename T>
 		const std::vector<EntityId> GetComponentView() const;
 
@@ -120,6 +123,32 @@ namespace Wire
 		assert(it != m_pools.end());
 
 		return reinterpret_cast<const std::vector<T>&>(it->second.GetAllComponents());
+	}
+
+	inline std::unordered_map<WireGUID, std::vector<uint8_t>> Registry::GetComponents(EntityId aEntity) const
+	{
+		std::unordered_map<WireGUID, std::vector<uint8_t>> data;
+
+		for (const auto& [guid, pool] : m_pools)
+		{
+			if (pool.HasComponent(aEntity))
+			{
+				data.emplace(guid, pool.GetComponentData(aEntity));
+			}
+		}
+
+		return data;
+	}
+
+	inline void Registry::SetComponents(const std::unordered_map<WireGUID, std::vector<uint8_t>>& components, EntityId aEntity)
+	{
+		for (auto& [guid, pool] : m_pools)
+		{
+			if (pool.HasComponent(aEntity) && components.find(guid) != components.end())
+			{
+				pool.SetComponentData(components.at(guid), aEntity);
+			}
+		}
 	}
 
 	template<typename T>

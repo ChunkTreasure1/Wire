@@ -46,6 +46,8 @@ namespace Wire
 		if (auto it = ComponentGUIDs().find(name); it == ComponentGUIDs().end())
 		{
 			ComponentGUIDs()[name] = guid;
+			ComponentGUIDs()[name].name = name;
+			
 			ParseDefinition(definitionData, ComponentGUIDs()[name]);
 			return true;
 		}
@@ -77,22 +79,25 @@ namespace Wire
 		return empty;
 	}
 
+	const ComponentRegistry::RegistrationInfo& ComponentRegistry::GetRegistryDataFromGUID(const WireGUID& aGuid)
+	{
+		for (const auto& [name, info] : ComponentGUIDs())
+		{
+			if (info.guid == aGuid)
+			{
+				return info;
+			}
+		}
+
+		static RegistrationInfo empty;
+		return empty;
+	}
+
 	std::unordered_map<std::string, ComponentRegistry::RegistrationInfo>& ComponentRegistry::ComponentGUIDs()
 	{
 		static std::unordered_map<std::string, RegistrationInfo> impl;
 		return impl;
 	}
-
-
-	/*
-	struct TestComponent
-	{
-		uint32_t dataOne;
-		uint32_t dataTwo;
-
-		inline static constexpr WireGUID comp_guid;
-	};
-	*/
 
 	void ComponentRegistry::ParseDefinition(const std::string& definitionData, RegistrationInfo& outInfo)
 	{
@@ -112,6 +117,7 @@ namespace Wire
 
 			auto nameEndIt = definitionData.find_first_of(";", spaceIt);
 			std::string name = definitionData.substr(spaceIt + 1, nameEndIt - spaceIt - 1);
+			name[0] = toupper(name[0]);
 
 			if (type != PropertyType::Unknown)
 			{

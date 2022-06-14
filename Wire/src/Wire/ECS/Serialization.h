@@ -34,6 +34,28 @@ namespace Wire
 			Unknown = 13
 		};
 
+		inline static const size_t GetSizeFromType(PropertyType type)
+		{
+			switch (type)
+			{
+				case ComponentRegistry::PropertyType::Bool: return sizeof(bool);
+				case ComponentRegistry::PropertyType::Int: return sizeof(int32_t);
+				case ComponentRegistry::PropertyType::UInt: return sizeof(uint32_t);
+				case ComponentRegistry::PropertyType::Short: return sizeof(int16_t);
+				case ComponentRegistry::PropertyType::UShort: return sizeof(uint16_t);
+				case ComponentRegistry::PropertyType::Char: return sizeof(int8_t);
+				case ComponentRegistry::PropertyType::UChar: return sizeof(uint8_t);
+				case ComponentRegistry::PropertyType::Float: return sizeof(float);
+				case ComponentRegistry::PropertyType::Double: return sizeof(double);
+				case ComponentRegistry::PropertyType::Vector2: return sizeof(float) * 2;
+				case ComponentRegistry::PropertyType::Vector3: return sizeof(float) * 3;
+				case ComponentRegistry::PropertyType::Vector4: return sizeof(float) * 4;
+				case ComponentRegistry::PropertyType::String: return sizeof(std::string);
+			}
+
+			return 0;
+		}
+
 		struct ComponentProperty
 		{
 			std::string name;
@@ -44,6 +66,7 @@ namespace Wire
 		{
 			WireGUID guid = WireGUID::Null();
 			size_t size = 0;
+			std::string name;
 
 			std::vector<ComponentProperty> properties;
 		};
@@ -53,6 +76,7 @@ namespace Wire
 		static bool Register(const std::string& name, const std::string& definitionData, const RegistrationInfo& guid);
 		static const std::string GetNameFromGUID(const WireGUID& aGuid);
 		static const RegistrationInfo& GetRegistryDataFromName(const std::string& aName);
+		static const RegistrationInfo& GetRegistryDataFromGUID(const WireGUID& aGuid);
 
 		static std::unordered_map<std::string, RegistrationInfo>& ComponentGUIDs();
 

@@ -18,6 +18,9 @@ public:
 	template<typename T>
 	T& GetComponent();
 
+	std::unordered_map<WireGUID, std::vector<uint8_t>> GetComponents();
+	void SetComponents(const std::unordered_map<WireGUID, std::vector<uint8_t>>& components);
+
 	template<typename T>
 	T& AddComponent();
 

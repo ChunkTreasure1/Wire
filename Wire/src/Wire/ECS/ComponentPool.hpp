@@ -27,7 +27,8 @@ namespace Wire
 
 		// Copies the data
 		std::vector<uint8_t> GetComponentData(EntityId aId) const;
-		
+		void SetComponentData(const std::vector<uint8_t>& data, EntityId aId);
+
 		bool HasComponent(EntityId aId) const;
 
 		inline const std::vector<uint8_t>& GetAllComponents() const { return m_pool; }

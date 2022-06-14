@@ -20,6 +20,16 @@ Entity::~Entity()
 {
 }
 
+std::unordered_map<WireGUID, std::vector<uint8_t>> Entity::GetComponents()
+{
+	return m_scene->m_registry.GetComponents(m_id);
+}
+
+void Entity::SetComponents(const std::unordered_map<WireGUID, std::vector<uint8_t>>& components)
+{
+	m_scene->m_registry.SetComponents(components, m_id);
+}
+
 Entity& Entity::operator=(const Entity& entity)
 {
 	m_id = entity.m_id;
