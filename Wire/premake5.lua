@@ -12,6 +12,7 @@ project "Wire"
 		"src/**.h",
 		"src/**.cpp",
 		"src/**.hpp",
+		"**.hint"
 	}
 
 	includedirs
