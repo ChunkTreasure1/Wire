@@ -6,10 +6,12 @@
 #include <unordered_map>
 #include <filesystem>
 
-#define SERIALIZE_COMPONENT(type, guid) inline static constexpr WireGUID comp_guid = guid;
-
-#define REGISTER_COMPONENT(definition, type) definition; \
+#define CREATE_COMPONENT_GUID(guid) inline static constexpr WireGUID comp_guid = guid;
+#define SERIALIZE_COMPONENT(definition, type) definition; \
 inline static bool type##_reg = Wire::ComponentRegistry::Register(#type, #definition, { type::comp_guid, sizeof(type) });
+
+
+#define PROPERTY(...)
 
 namespace Wire
 {
