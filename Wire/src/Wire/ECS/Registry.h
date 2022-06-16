@@ -46,6 +46,9 @@ namespace Wire
 		template<typename T>
 		bool HasComponent(EntityId aEntity) const;
 
+		template<typename ... T>
+		bool HasComponents(EntityId aEntity) const;
+
 		template<typename T>
 		void RemoveComponent(EntityId aEntity);
 
@@ -57,6 +60,9 @@ namespace Wire
 
 		template<typename T>
 		const std::vector<EntityId> GetComponentView() const;
+
+		template<typename ... T, typename F>
+		void ForEach(F&& func);
 
 	private:
 		std::unordered_map<WireGUID, ComponentPool> m_pools;
@@ -101,6 +107,12 @@ namespace Wire
 	{
 		const WireGUID guid = T::comp_guid;
 		return m_pools.at(guid).HasComponent(aEntity);
+	}
+
+	template<typename ...T>
+	inline bool Registry::HasComponents(EntityId aEntity) const
+	{
+		return (HasComponent<T>(aEntity) && ...);
 	}
 
 	template<typename T>
@@ -163,5 +175,17 @@ namespace Wire
 		}
 
 		return std::vector<EntityId>();
+	}
+
+	template<typename ...T, typename F>
+	inline void Registry::ForEach(F&& func)
+	{
+		for (const auto& id : m_usedIds)
+		{
+			if (HasComponents<T...>(id))
+			{
+				func(id, GetComponent<T>(id)...);
+			}
+		}
 	}
 }
