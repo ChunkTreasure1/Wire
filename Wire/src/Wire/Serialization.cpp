@@ -37,6 +37,9 @@ namespace Wire
 			if (string == "glm::vec3") return ComponentRegistry::PropertyType::Vector3;
 			if (string == "glm::vec4") return ComponentRegistry::PropertyType::Vector4;
 
+			if (string == "int64_t") return ComponentRegistry::PropertyType::Int64;
+			if (string == "uint64_t") return ComponentRegistry::PropertyType::UInt64;
+
 			return ComponentRegistry::PropertyType::Unknown;
 		}
 	}

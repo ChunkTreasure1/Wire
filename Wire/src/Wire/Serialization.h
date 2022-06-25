@@ -7,6 +7,7 @@
 #include <filesystem>
 
 #define CREATE_COMPONENT_GUID(guid) inline static constexpr WireGUID comp_guid = guid;
+
 #define SERIALIZE_COMPONENT(definition, type) definition; \
 inline static bool type##_reg = Wire::ComponentRegistry::Register(#type, #definition, { type::comp_guid, sizeof(type) });
 
@@ -33,7 +34,10 @@ namespace Wire
 			Vector3 = 10,
 			Vector4 = 11,
 			String = 12,
-			Unknown = 13
+			Unknown = 13,
+
+			Int64 = 14,
+			UInt64 = 15
 		};
 
 		inline static const size_t GetSizeFromType(PropertyType type)
@@ -53,6 +57,9 @@ namespace Wire
 				case ComponentRegistry::PropertyType::Vector3: return sizeof(float) * 3;
 				case ComponentRegistry::PropertyType::Vector4: return sizeof(float) * 4;
 				case ComponentRegistry::PropertyType::String: return sizeof(std::string);
+
+				case ComponentRegistry::PropertyType::Int64: return sizeof(int64_t);
+				case ComponentRegistry::PropertyType::UInt64: return sizeof(uint64_t);
 			}
 
 			return 0;
