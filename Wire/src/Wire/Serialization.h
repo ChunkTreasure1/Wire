@@ -11,7 +11,14 @@
 #define SERIALIZE_COMPONENT(definition, type) definition; \
 inline static bool type##_reg = Wire::ComponentRegistry::Register(#type, #definition, { type::comp_guid, sizeof(type) });
 
-
+/*
+* PROPERTY values:
+* Serializable: true/false
+* Visible: true/false
+* Name: string
+* Category: string
+* SpecialType: string
+*/
 #define PROPERTY(...)
 
 namespace Wire
@@ -37,7 +44,10 @@ namespace Wire
 			Unknown = 13,
 
 			Int64 = 14,
-			UInt64 = 15
+			UInt64 = 15,
+			AssetHandle = 16,
+			Color3 = 17,
+			Color4 = 18
 		};
 
 		inline static const size_t GetSizeFromType(PropertyType type)
@@ -60,6 +70,9 @@ namespace Wire
 
 				case ComponentRegistry::PropertyType::Int64: return sizeof(int64_t);
 				case ComponentRegistry::PropertyType::UInt64: return sizeof(uint64_t);
+				case ComponentRegistry::PropertyType::AssetHandle: return sizeof(uint64_t);
+				case ComponentRegistry::PropertyType::Color3: return sizeof(float) * 3;
+				case ComponentRegistry::PropertyType::Color4: return sizeof(float) * 4;
 			}
 
 			return 0;
@@ -68,7 +81,13 @@ namespace Wire
 		struct ComponentProperty
 		{
 			std::string name;
+			std::string category;
+
+			bool serializable = true;
+			bool visible = true;
+
 			PropertyType type;
+			uint32_t offset = 0;
 		};
 
 		struct RegistrationInfo
@@ -91,6 +110,9 @@ namespace Wire
 
 	private:
 		static void ParseDefinition(const std::string& definitionData, RegistrationInfo& outInfo);
+		static std::string FindValueInString(const std::string& srcString, const std::string& key);
+		static std::unordered_map<std::string, size_t> GetMemberOffsetsFromString(const std::string& srcString);
+		static std::pair<PropertyType, std::string> FindNameAndTypeFromString(const std::string& srcString);
 	};
 
 	class Serializer

@@ -40,7 +40,17 @@ namespace Wire
 			if (string == "int64_t") return ComponentRegistry::PropertyType::Int64;
 			if (string == "uint64_t") return ComponentRegistry::PropertyType::UInt64;
 
+			if (string == "AssetHandle") return ComponentRegistry::PropertyType::AssetHandle;
+
 			return ComponentRegistry::PropertyType::Unknown;
+		}
+
+		inline std::string ToLower(const std::string& str)
+		{
+			std::string newStr(str);
+			std::transform(str.begin(), str.end(), newStr.begin(), ::tolower);
+
+			return newStr;
 		}
 	}
 
@@ -50,7 +60,7 @@ namespace Wire
 		{
 			ComponentGUIDs()[name] = guid;
 			ComponentGUIDs()[name].name = name;
-			
+
 			ParseDefinition(definitionData, ComponentGUIDs()[name]);
 			return true;
 		}
@@ -104,33 +114,183 @@ namespace Wire
 
 	void ComponentRegistry::ParseDefinition(const std::string& definitionData, RegistrationInfo& outInfo)
 	{
-		// Find first {, which is the start of the component
-		auto it = definitionData.find('{');
+		constexpr size_t propertyTextLength = 9;
 
-		while (it != std::string::npos)
+		auto propertyOffsets = GetMemberOffsetsFromString(definitionData);
+
+		// Find first {, which is the start of the component
+		size_t offset = definitionData.find_first_of('{');
+		offset = definitionData.find("PROPERTY(", offset);
+
+		while (offset != std::string::npos)
 		{
-			it = definitionData.find_first_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", it);
-			if (it == std::string::npos)
+			const size_t propertyBegin = offset;
+			const size_t propertyEnd = definitionData.find(")", offset);
+
+			if (propertyBegin == std::string::npos)
 			{
 				break;
 			}
 
-			auto spaceIt = definitionData.find_first_of(' ', it);
-			PropertyType type = Utility::PropertyFromString(definitionData.substr(it, spaceIt - it));
+			std::string propertySubStr = definitionData.substr(offset + propertyTextLength, propertyEnd - (propertyBegin + propertyTextLength));
 
-			auto nameEndIt = definitionData.find_first_of(";", spaceIt);
-			std::string name = definitionData.substr(spaceIt + 1, nameEndIt - spaceIt - 1);
-			name[0] = toupper(name[0]);
-
-			if (type != PropertyType::Unknown)
+			// Handle property options
 			{
-				auto& property = outInfo.properties.emplace_back();
-				property.name = name;
-				property.type = type;
+				std::string propertyName;
+				std::string propertyCategory;
+				std::string propertySpecialType;
+
+				bool propertySerializable = true;
+				bool propertyVisible = true;
+
+				uint32_t propertyMemOffset = 0;
+				PropertyType propertyType;
+
+				propertyName = FindValueInString(propertySubStr, "Name");
+				propertyCategory = FindValueInString(propertySubStr, "Category");
+				propertySpecialType = Utility::ToLower(FindValueInString(propertySubStr, "SpecialType"));
+
+				{
+					std::string value = Utility::ToLower(FindValueInString(propertySubStr, "Serializable"));
+					propertySerializable = value == "false" ? false : true;
+				}
+
+				{
+					std::string value = Utility::ToLower(FindValueInString(propertySubStr, "Visible"));
+					propertyVisible = value == "false" ? false : true;
+				}
+
+				// Find property name and get it's offset
+				{
+					const size_t propertyOffset = definitionData.find_first_of(';', propertyBegin);
+					std::string propertyString = definitionData.substr(propertyBegin, propertyOffset - propertyBegin);
+
+					const auto [type, name] = FindNameAndTypeFromString(propertyString);
+					if (propertyName.empty())
+					{
+						propertyName = name;
+						propertyName[0] = toupper(propertyName[0]);
+					}
+
+					propertyMemOffset = (uint32_t)propertyOffsets[name];
+					propertyType = type;
+
+				}
+
+				if (propertyType != PropertyType::Unknown)
+				{
+					auto& propertyValues = outInfo.properties.emplace_back();
+					propertyValues.category = propertyCategory;
+					propertyValues.name = propertyName;
+					propertyValues.offset = propertyMemOffset;
+					propertyValues.serializable = propertySerializable;
+					propertyValues.visible = propertyVisible;
+					propertyValues.type = propertyType;
+
+					if (propertySpecialType == "color" && (propertyType == PropertyType::Vector3 || propertyType == PropertyType::Vector4))
+					{
+						propertyValues.type = propertyType == PropertyType::Vector3 ? PropertyType::Color3 : PropertyType::Color4;
+					}
+				}
 			}
 
-			it = definitionData.find_first_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", nameEndIt);
+			offset = definitionData.find("PROPERTY(", propertyEnd);
 		}
+	}
+
+	std::string ComponentRegistry::FindValueInString(const std::string& srcString, const std::string& key)
+	{
+		std::string result;
+		std::string lowerKey = Utility::ToLower(key);
+
+		if (size_t offset = srcString.find(key); offset != std::string::npos)
+		{
+			const size_t nextPropertyOffset = srcString.find(",", offset);
+			const size_t propertyLength = (nextPropertyOffset != std::string::npos ? nextPropertyOffset : srcString.size()) - offset;
+
+			std::string propertySubStr = srcString.substr(offset, propertyLength);
+
+			const size_t equalSignOffset = propertySubStr.find("=");
+			const size_t firstLetter = propertySubStr.find_first_not_of(" =", equalSignOffset);
+
+			result = propertySubStr.substr(firstLetter, propertySubStr.size() - firstLetter);
+		}
+
+		return result;
+	}
+
+	std::unordered_map<std::string, size_t> ComponentRegistry::GetMemberOffsetsFromString(const std::string& srcString)
+	{
+		std::unordered_map<std::string, size_t> properties;
+		size_t memoryOffset = 0;
+		size_t stringOffset = srcString.find_first_of('{');
+
+		while (stringOffset != std::string::npos)
+		{
+			const size_t propertyOffset = srcString.find_first_of(';', stringOffset);
+			std::string propertyString = srcString.substr(stringOffset, propertyOffset - stringOffset);
+
+			const auto [type, name] = FindNameAndTypeFromString(propertyString);
+
+			properties.emplace(name, memoryOffset);
+
+			memoryOffset += GetSizeFromType(type);
+			stringOffset = srcString.find_first_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", propertyOffset);
+
+			// Check for GUID definition
+			{
+				size_t nextSemiColon = srcString.find_first_of(';', stringOffset);
+				if (nextSemiColon != std::string::npos)
+				{
+					std::string guidSubString = srcString.substr(stringOffset, nextSemiColon - stringOffset);
+					if (guidSubString.find("CREATE_COMPONENT_GUID(") != std::string::npos)
+					{
+						stringOffset = srcString.find_first_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", nextSemiColon);
+					}
+				}
+			}
+		}
+
+		return properties;
+	}
+
+	std::pair<ComponentRegistry::PropertyType, std::string> ComponentRegistry::FindNameAndTypeFromString(const std::string& srcString)
+	{
+		bool hasProperty = srcString.find("PROPERTY(") != std::string::npos;
+
+		size_t propDefEnd = srcString.find_first_of(')');
+		if (propDefEnd == std::string::npos || !hasProperty)
+		{
+			propDefEnd = 0;
+		}
+
+		PropertyType type;
+		std::string name;
+
+		size_t nameOffset = 0;
+
+		{
+			const size_t nextLetter = srcString.find_first_not_of(' ', propDefEnd + 1);
+			const size_t nextSpace = srcString.find_first_of(' ', nextLetter);
+
+			std::string typeString = srcString.substr(nextLetter, nextSpace - nextLetter);
+			type = Utility::PropertyFromString(typeString);
+
+			nameOffset = nextSpace;
+		}
+
+		{
+			const size_t nextLetter = srcString.find_first_not_of(' ', nameOffset);
+			size_t endOfName = srcString.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", nextLetter);
+			if (endOfName == std::string::npos)
+			{
+				endOfName = srcString.length();
+			}
+
+			name = srcString.substr(nextLetter, endOfName - nextLetter + 1);
+		}
+
+		return { type, name };
 	}
 
 	void Serializer::SerializeEntityToFile(EntityId aId, const Registry& aRegistry, const std::filesystem::path& aSceneFolder)
