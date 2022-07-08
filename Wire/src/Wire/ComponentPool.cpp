@@ -26,6 +26,11 @@ namespace Wire
 		
 		m_toEntityMap[aId] = index;
 		m_entitiesWithComponent.emplace_back(aId);
+
+		if (m_onCreate)
+		{
+			m_onCreate(&m_pool[index]);
+		}
 	}	
 
 	void ComponentPool::SetComponentData(const std::vector<uint8_t>& data, EntityId aId)

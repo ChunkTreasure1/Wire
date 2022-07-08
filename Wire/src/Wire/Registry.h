@@ -27,6 +27,7 @@ namespace Wire
 		void Clear();
 
 		void AddComponent(const std::vector<uint8_t> data, const WireGUID& guid, EntityId id);
+
 		std::vector<uint8_t> GetEntityComponentData(EntityId id) const;
 
 		/*
@@ -63,6 +64,12 @@ namespace Wire
 
 		template<typename ... T, typename F>
 		void ForEach(F&& func);
+
+		template<typename T>
+		inline void SetOnCreateComponent(std::function<void(void*)> func);
+
+		template<typename T>
+		inline void SetOnRemoveComponent(std::function<void(void*)> func);
 
 	private:
 		std::unordered_map<WireGUID, ComponentPool> m_pools;
@@ -106,7 +113,12 @@ namespace Wire
 	inline bool Registry::HasComponent(EntityId aEntity) const
 	{
 		const WireGUID guid = T::comp_guid;
-		return m_pools.at(guid).HasComponent(aEntity);
+		if (m_pools.find(guid) != m_pools.end())
+		{
+			return m_pools.at(guid).HasComponent(aEntity);
+		}
+
+		return false;
 	}
 
 	template<typename ...T>
@@ -186,6 +198,30 @@ namespace Wire
 			{
 				func(id, GetComponent<T>(id)...);
 			}
+		}
+	}
+
+	template<typename T>
+	inline void Registry::SetOnCreateComponent(std::function<void(void*)> func)
+	{
+		const WireGUID guid = T::comp_guid;
+
+		auto it = m_pools.find(guid);
+		if (it != m_pools.end())
+		{
+			it->second.SetOnCreateComponent(func);
+		}
+	}
+
+	template<typename T>
+	inline void Registry::SetOnRemoveComponent(std::function<void(void*)> func)
+	{
+		const WireGUID guid = T::comp_guid;
+
+		auto it = m_pools.find(guid);
+		if (it != m_pools.end())
+		{
+			it->second.SetOnRemoveComponent(func);
 		}
 	}
 }
