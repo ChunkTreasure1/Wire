@@ -27,6 +27,7 @@ namespace Wire
 		void Clear();
 
 		void AddComponent(const std::vector<uint8_t> data, const WireGUID& guid, EntityId id);
+		bool HasComponent(const WireGUID& guid, EntityId id);
 
 		std::vector<uint8_t> GetEntityComponentData(EntityId id) const;
 

@@ -122,6 +122,17 @@ namespace Wire
 		}
 	}
 
+	bool Registry::HasComponent(const WireGUID& guid, EntityId id)
+	{
+		auto it = m_pools.find(guid);
+		if (it != m_pools.end())
+		{
+			return it->second.HasComponent(id);
+		}
+
+		return false;
+	}
+
 	std::vector<uint8_t> Registry::GetEntityComponentData(EntityId id) const
 	{
 		std::vector<uint8_t> data;
