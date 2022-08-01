@@ -21,6 +21,7 @@ namespace Wire
 		void AddChild(EntityId parent, EntityId child);
 		void RemoveChild(EntityId parent, EntityId child);
 
+		inline const std::vector<EntityId>& GetAllEntities() const { return m_usedIds; }
 		const std::vector<EntityId>& GetChildren(EntityId parent) const;
 
 		void RemoveEntity(EntityId aId);
