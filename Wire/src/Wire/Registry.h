@@ -74,6 +74,8 @@ namespace Wire
 		inline void SetOnRemoveComponent(std::function<void(void*)> func);
 
 	private:
+		friend class Serializer;
+
 		std::unordered_map<WireGUID, ComponentPool> m_pools;
 		std::unordered_map<EntityId, std::vector<EntityId>> m_childEntities;
 

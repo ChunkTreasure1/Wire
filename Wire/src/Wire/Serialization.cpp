@@ -296,18 +296,49 @@ namespace Wire
 	void Serializer::SerializeEntityToFile(EntityId aId, const Registry& aRegistry, const std::filesystem::path& aSceneFolder)
 	{
 		std::vector<uint8_t> data;
-		const std::vector<uint8_t> encodedComponentData = aRegistry.GetEntityComponentDataEncoded(aId);
-		const uint32_t componentCount = aRegistry.GetComponentCount(aId);
+		size_t offset = 0;
+		
+		data.resize(sizeof(EntityId));
+		memcpy_s(&data[0], sizeof(EntityId), &aId, sizeof(EntityId));
+		offset += sizeof(EntityId);
 
-		data.resize(sizeof(EntityId) + sizeof(uint32_t) + encodedComponentData.size());
-
-		memcpy_s(data.data(), sizeof(EntityId), &aId, sizeof(EntityId));
-		memcpy_s(&data[sizeof(EntityId)], sizeof(uint32_t), &componentCount, sizeof(uint32_t));
-		memcpy_s(&data[sizeof(EntityId) + sizeof(uint32_t)], encodedComponentData.size(), encodedComponentData.data(), encodedComponentData.size());
-
-		if (!std::filesystem::exists(aSceneFolder))
+		for (const auto& [guid, pool] : aRegistry.m_pools)
 		{
-			std::filesystem::create_directories(aSceneFolder);
+			if (pool.HasComponent(aId))
+			{
+				const auto& registrationData = ComponentRegistry::GetRegistryDataFromGUID(guid);
+
+				uint32_t totalComponentSize = sizeof(WireGUID);
+
+				// Component size
+				for (const auto& property : registrationData.properties)
+				{
+					if (property.serializable)
+					{
+						totalComponentSize += (uint32_t)ComponentRegistry::GetSizeFromType(property.type);
+					}
+				}
+
+				data.resize(data.size() + sizeof(uint32_t) + totalComponentSize);
+				memcpy_s(&data[offset], sizeof(uint32_t), &totalComponentSize, sizeof(uint32_t));
+				offset += sizeof(uint32_t);
+
+				// GUID
+				memcpy_s(&data[offset], sizeof(WireGUID), &guid, sizeof(WireGUID));
+				offset += sizeof(WireGUID);
+
+				const auto componentData = pool.GetComponentData(aId);
+				for (const auto& property : registrationData.properties)
+				{
+					if (property.serializable)
+					{
+						const size_t typeSize = ComponentRegistry::GetSizeFromType(property.type);
+
+						memcpy_s(&data[offset], typeSize, &componentData[property.offset], typeSize);
+						offset += typeSize;
+					}
+				}
+			}
 		}
 
 		std::filesystem::path finalPath = aSceneFolder / (std::string("Entity_") + std::to_string(aId) + ".ent");
@@ -322,7 +353,7 @@ namespace Wire
 		std::ifstream file(aPath.string(), std::ios::binary);
 		if (!file.is_open())
 		{
-			return 0;
+			return Wire::NullID;
 		}
 
 		std::vector<uint8_t> totalData;
@@ -335,29 +366,37 @@ namespace Wire
 
 		const EntityId id = *reinterpret_cast<EntityId*>(&totalData[offset]);
 		aRegistry.AddEntity(id);
-
 		offset += sizeof(EntityId);
 
-		const uint32_t componentCount = *reinterpret_cast<uint32_t*>(&totalData[offset]);
-		offset += sizeof(uint32_t);
-
-		for (uint32_t i = 0; i < componentCount; i++)
+		while (offset < totalData.size())
 		{
-			const uint16_t nameSize = *reinterpret_cast<uint16_t*>(&totalData[offset]);
-			offset += sizeof(uint16_t);
-
-			std::string name(reinterpret_cast<char*>(&totalData[offset]), nameSize);
-
-			offset += nameSize;
-
-			const ComponentRegistry::RegistrationInfo& registryData = ComponentRegistry::GetRegistryDataFromName(name);
-
 			std::vector<uint8_t> componentData;
-			componentData.resize(registryData.size);
-			memcpy_s(componentData.data(), componentData.size(), &totalData[offset], registryData.size);
-			offset += registryData.size;
+			size_t componentOffset = 0;
 
-			aRegistry.AddComponent(componentData, registryData.guid, id);
+			// Total component size
+			const uint32_t totalComponentSize = *reinterpret_cast<uint32_t*>(&totalData[offset]);
+			offset += sizeof(uint32_t);
+
+			componentData.resize(totalComponentSize - sizeof(WireGUID), 0);
+
+			// GUID
+			const WireGUID componentGUID = *reinterpret_cast<WireGUID*>(&totalData[offset]);
+			offset += sizeof(WireGUID);
+
+			const auto& registrationData = ComponentRegistry::GetRegistryDataFromGUID(componentGUID);
+			for (const auto& property : registrationData.properties)
+			{
+				if (property.serializable)
+				{
+					const size_t propertySize = ComponentRegistry::GetSizeFromType(property.type);
+					memcpy_s(&componentData[componentOffset], propertySize, &totalData[offset], propertySize);
+					offset += propertySize;
+				}
+
+				componentOffset = property.offset;
+			}
+
+			aRegistry.AddComponent(componentData, componentGUID, id);
 		}
 
 		return id;
