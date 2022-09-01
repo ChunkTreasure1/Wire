@@ -1,24 +1,6 @@
-workspace "Wire"
-	architecture "x64"
-	startproject "Wire"
-
-	configurations
-	{
-		"Debug",
-		"Release",
-		"Dist"
-	}
-	
-	flags
-	{
-		"MultiProcessorCompile"
-	}
-	
-outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
-
 project "Wire"
 	location "Wire"
-	kind "ConsoleApp"
+	kind "StaticLib"
 	language "C++"
 	cppdialect "C++17"
 

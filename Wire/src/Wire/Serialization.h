@@ -1,12 +1,12 @@
 #pragma once
 
-#include "GUID.h"
+#include "WireGUID.h"
 #include "Registry.h"
 
 #include <unordered_map>
 #include <filesystem>
 
-#define SERIALIZE_COMPONENT(type, guid) inline static constexpr GUID comp_guid = guid;
+#define SERIALIZE_COMPONENT(type, guid) inline static constexpr WireGUID comp_guid = guid;
 #define REGISTER_COMPONENT(type) inline static bool type##_reg = Wire::ComponentRegistry::Register(#type, { type::comp_guid, sizeof(type) });
 
 namespace Wire
@@ -16,14 +16,14 @@ namespace Wire
 	public:
 		struct RegistrationInfo
 		{
-			GUID guid = GUID::Null();
+			WireGUID guid = WireGUID::Null();
 			size_t size = 0;
 		};
 
 		ComponentRegistry() = delete;
 
 		static bool Register(const std::string& name, const RegistrationInfo& guid);
-		static const std::string GetNameFromGUID(const GUID& aGuid);
+		static const std::string GetNameFromGUID(const WireGUID& aGuid);
 		static const RegistrationInfo& GetRegistryDataFromName(const std::string& aName);
 
 		static std::unordered_map<std::string, RegistrationInfo>& ComponentGUIDs();
