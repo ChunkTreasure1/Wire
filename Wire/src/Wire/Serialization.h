@@ -8,7 +8,9 @@
 
 #define CREATE_COMPONENT_GUID(guid) inline static constexpr WireGUID comp_guid = guid;
 
-#define SERIALIZE_COMPONENT(definition, type) definition; \
+
+#define UNPACK(...) __VA_ARGS__
+#define SERIALIZE_COMPONENT(definition, type) UNPACK definition; \
 inline static bool type##_reg = Wire::ComponentRegistry::Register(#type, #definition, { type::comp_guid, sizeof(type) });
 
 /*
