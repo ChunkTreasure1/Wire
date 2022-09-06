@@ -18,9 +18,8 @@ namespace Wire
 
 		void AddComponent(EntityId aId, const std::vector<uint8_t> data);
 
-
 		template<typename T>
-		T& AddComponent(EntityId aId, T& aComponent);
+		T& AddComponent(EntityId aId);
 
 		void RemoveComponent(EntityId aId);
 
@@ -51,18 +50,18 @@ namespace Wire
 	};
 
 	template<typename T>
-	inline T& ComponentPool::AddComponent(EntityId aId, T& aComponent)
+	inline T& ComponentPool::AddComponent(EntityId aId)
 	{
 		auto it = m_toEntityMap.find(aId);
 		assert(it == m_toEntityMap.end());
 
 		size_t index = m_pool.size();
 		m_pool.resize(m_pool.size() + sizeof(T));
-		memcpy_s(&m_pool[index], sizeof(T), &aComponent, sizeof(T));
+
+		T* newComp = new(&m_pool[index]) T();
 
 		m_toEntityMap[aId] = index;
 		m_entitiesWithComponent.emplace_back(aId);
-
 
 		if (m_onCreate)
 		{

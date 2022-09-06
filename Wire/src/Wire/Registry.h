@@ -40,8 +40,8 @@ namespace Wire
 		std::vector<uint8_t> GetEntityComponentDataEncoded(EntityId id) const;
 		const uint32_t GetComponentCount(EntityId aId) const;
 
-		template<typename T, typename ... Args>
-		T& AddComponent(EntityId aEntity, Args&&... args);
+		template<typename T>
+		T& AddComponent(EntityId aEntity);
 
 		template<typename T>
 		T& GetComponent(EntityId aEntity);
@@ -84,23 +84,20 @@ namespace Wire
 		std::vector<EntityId> m_usedIds;
 	};
 
-	template<typename T, typename ...Args>
-	inline T& Registry::AddComponent(EntityId aEntity, Args && ...args)
+	template<typename T>
+	inline T& Registry::AddComponent(EntityId aEntity)
 	{
 		const WireGUID guid = T::comp_guid;
 
 		auto it = m_pools.find(guid);
 		if (it != m_pools.end())
 		{
-			T comp(std::forward<Args>(args)...);
-			return it->second.AddComponent<T>(aEntity, comp);
+			return it->second.AddComponent<T>(aEntity);
 		}
 		else
 		{
 			m_pools.emplace(guid, ComponentPool(sizeof(T)));
-
-			T comp(std::forward<Args>(args)...);
-			return m_pools[guid].AddComponent(aEntity, comp);
+			return m_pools[guid].AddComponent<T>(aEntity);
 		}
 	}
 
