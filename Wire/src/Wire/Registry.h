@@ -97,6 +97,7 @@ namespace Wire
 		else
 		{
 			m_pools.emplace(guid, ComponentPool(sizeof(T)));
+			m_pools[guid].SetDestructor(std::make_shared<Destructor<T>>());
 			return m_pools[guid].AddComponent<T>(aEntity);
 		}
 	}

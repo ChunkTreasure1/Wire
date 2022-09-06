@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Entity.h"
+#include "Destructor.h"
 
 #include <vector>
 #include <functional>
@@ -15,8 +16,10 @@ namespace Wire
 		ComponentPool() = default;
 		ComponentPool(const ComponentPool& pool);
 		ComponentPool(uint32_t aSize);
+		~ComponentPool();
 
 		void AddComponent(EntityId aId, const std::vector<uint8_t> data);
+		inline void SetDestructor(std::shared_ptr<DestructorBase> destructor) { m_destructor = destructor; }
 
 		template<typename T>
 		T& AddComponent(EntityId aId);
@@ -44,6 +47,8 @@ namespace Wire
 		std::vector<uint8_t> m_pool;
 		std::vector<EntityId> m_entitiesWithComponent;
 		std::unordered_map<EntityId, size_t> m_toEntityMap;
+
+		std::shared_ptr<DestructorBase> m_destructor;
 
 		std::function<void(void*)> m_onCreate;
 		std::function<void(void*)> m_onRemove;
