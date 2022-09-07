@@ -19,7 +19,6 @@ namespace Wire
 		~ComponentPool();
 
 		void AddComponent(EntityId aId, const std::vector<uint8_t> data);
-		inline void SetDestructor(std::shared_ptr<DestructorBase> destructor) { m_destructor = destructor; }
 
 		template<typename T>
 		T& AddComponent(EntityId aId);
@@ -60,6 +59,11 @@ namespace Wire
 		auto it = m_toEntityMap.find(aId);
 		assert(it == m_toEntityMap.end());
 
+		if (!m_destructor)
+		{
+			m_destructor = std::make_shared<Destructor<T>>();
+		}
+
 		size_t index = m_pool.size();
 		m_pool.resize(m_pool.size() + sizeof(T));
 
@@ -88,6 +92,11 @@ namespace Wire
 
 		const size_t lastComponentIndex = m_pool.size() - m_componentSize;
 
+		if (m_destructor)
+		{
+			m_destructor->Destroy(&m_pool[it->second]);
+		}
+
 		memcpy_s(&m_pool[it->second], m_componentSize, &m_pool[lastComponentIndex], m_componentSize);
 		m_pool.resize(m_pool.size() - m_componentSize);
 
@@ -108,6 +117,12 @@ namespace Wire
 	inline T& ComponentPool::GetComponent(EntityId aId)
 	{
 		assert(HasComponent(aId));
+	
+		if (!m_destructor)
+		{
+			m_destructor = std::make_shared<Destructor<T>>();
+		}
+		
 		return *reinterpret_cast<T*>(&m_pool.at(m_toEntityMap.at(aId)));
 	}
 
