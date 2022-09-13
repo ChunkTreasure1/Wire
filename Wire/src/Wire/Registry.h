@@ -22,6 +22,7 @@ namespace Wire
 		void RemoveChild(EntityId parent, EntityId child);
 
 		const std::vector<EntityId>& GetChildren(EntityId parent) const;
+		inline const std::vector<EntityId>& GetAllEntities() const { return m_usedIds; }
 
 		void RemoveEntity(EntityId aId);
 		void Clear();
@@ -53,7 +54,7 @@ namespace Wire
 		const std::vector<T>& GetAllComponents() const;
 
 		template<typename T>
-		const std::vector<EntityId>& GetComponentView() const;
+		const std::vector<EntityId> GetComponentView() const;
 
 	private:
 		std::unordered_map<WireGUID, ComponentPool> m_pools;
@@ -123,12 +124,15 @@ namespace Wire
 	}
 	
 	template<typename T>
-	inline const std::vector<EntityId>& Registry::GetComponentView() const
+	inline const std::vector<EntityId> Registry::GetComponentView() const
 	{
 		const WireGUID guid = T::comp_guid;
 
 		auto& it = m_pools.find(guid);
-		assert(it != m_pools.end());
+		if (it == m_pools.end())
+		{
+			return std::vector <EntityId>();
+		}
 
 		return it->second.GetComponentView();
 	}

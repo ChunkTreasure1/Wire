@@ -32,7 +32,7 @@
 			return WireGUID(0, 0);
 		}
 
-		constexpr bool IsNull() const { return hiPart == 0 && hiPart == 0; }
+		constexpr bool IsNull() const { return loPart == 0 && hiPart == 0; }
 		constexpr bool operator==(const WireGUID& rhs) const { return hiPart == rhs.hiPart && loPart == rhs.loPart; }
 		constexpr bool operator!=(const WireGUID& rhs) const { return hiPart != rhs.hiPart || loPart != rhs.loPart; }
 		constexpr bool operator<(const WireGUID& rhs) const { return hiPart < rhs.hiPart || ((hiPart == rhs.hiPart) && loPart < rhs.loPart); }
