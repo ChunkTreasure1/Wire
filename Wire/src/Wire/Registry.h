@@ -79,7 +79,7 @@ namespace Wire
 		}
 		else
 		{
-			m_pools.emplace(guid, CreateRef<ComponentPool<T>>());
+			m_pools.emplace(guid, std::make_shared<ComponentPool<T>>());
 			return *(T*)m_pools[guid]->AddComponent(aEntity, componentInitData);
 		}
 	}

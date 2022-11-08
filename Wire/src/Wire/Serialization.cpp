@@ -206,15 +206,6 @@ namespace Wire
 
 						propertyEnumName = propertyString.substr(firstLetter, lastLetter - firstLetter);
 					}
-
-					if (propertySpecialType == "asset")
-					{
-						std::string assetType = Utility::ToLower(FindValueInString(propertySubStr, "AssetType"));
-						if (!assetType.empty())
-						{
-							specialTypeValue = GetAssetTypeFromSting(assetType);
-						}
-					}
 				}
 
 

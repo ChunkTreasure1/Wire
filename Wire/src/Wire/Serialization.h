@@ -5,8 +5,6 @@
 #include "Destructor.h"
 #include "ComponentPool.hpp"
 
-#include <Volt/Asset/Asset.h>
-
 #include <unordered_map>
 #include <filesystem>
 #include <any>
@@ -98,43 +96,6 @@ namespace Wire
 			GUID = 23,
 			Enum = 24
 		};
-
-		inline static const Volt::AssetType GetAssetTypeFromSting(const std::string& s)
-		{
-			static std::unordered_map<std::string, Volt::AssetType> assetsNameMap =
-			{
-				{ "MeshSource", Volt::AssetType::MeshSource },
-				{ "Mesh", Volt::AssetType::Mesh },
-
-				{ "Skeleton", Volt::AssetType::Skeleton },
-				{ "Animation", Volt::AssetType::Animation },
-				{ "AnimatedCharacter", Volt::AssetType::AnimatedCharacter },
-
-				{ "Texture", Volt::AssetType::Texture },
-
-				{ "Shader", Volt::AssetType::Shader },
-				{ "ShaderSource", Volt::AssetType::ShaderSource },
-
-				{ "Material", Volt::AssetType::Material },
-				{ "PhysicsMaterial", Volt::AssetType::PhysicsMaterial },
-
-				{ "Scene", Volt::AssetType::Scene },
-				{ "Prefab", Volt::AssetType::Prefab },
-				{ "ParticlePreset", Volt::AssetType::ParticlePreset },
-				{ "Font", Volt::AssetType::Font },
-				{ "Video", Volt::AssetType::Video }
-			};
-
-			for (const auto& [name, type] : assetsNameMap)
-			{
-				if (Utility::ToLower(name) == s)
-				{
-					return type;
-				}
-			}
-
-			return Volt::AssetType::None;
-		}
 
 		inline static const size_t GetSizeFromType(PropertyType type)
 		{
