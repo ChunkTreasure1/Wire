@@ -2,104 +2,173 @@
 
 #include "Entity.h"
 
+#include "WireGUID.h"
+
 #include <vector>
+#include <functional>
 #include <unordered_map>
 #include <cassert>
 
 namespace Wire
 {
-	class ComponentPool
+	class ComponentPoolBase
 	{
 	public:
-		ComponentPool() = default;
-		ComponentPool(const ComponentPool& pool);
-		ComponentPool(uint32_t aSize);
+		virtual ~ComponentPoolBase() = default;
 
-		void AddComponent(EntityId aId, const std::vector<uint8_t> data);
+		virtual void* AddComponent(EntityId id, void* componentInitData) = 0;
+		virtual void* GetComponent(EntityId id) = 0;
 
-		template<typename T>
-		T& AddComponent(EntityId aId, T& aComponent);
+		virtual void RemoveComponent(EntityId id) = 0;
+		virtual bool HasComponent(EntityId id) = 0;
 
-		void RemoveComponent(EntityId aId);
+		virtual void SetOnCreateFunction(std::function<void(EntityId, void*)>& func) = 0;
+		virtual void SetOnRemoveFunction(std::function<void(EntityId, void*)>& func) = 0;
 
-		template<typename T>
-		T& GetComponent(EntityId aId);
-
-		// Copies the data
-		std::vector<uint8_t> GetComponentData(EntityId aId) const;
-		
-		bool HasComponent(EntityId aId) const;
-
-		inline const std::vector<uint8_t>& GetAllComponents() const { return m_pool; }
-		inline const uint32_t GetComponentSize() const { return m_componentSize; }
-		inline const std::vector<EntityId>& GetComponentView() const { return m_entitiesWithComponent; }
+		virtual void* GetAllComponents(EntityId id) = 0;
+		virtual const std::vector<Wire::EntityId>& GetComponentView() const = 0;
 
 	private:
-		uint32_t m_componentSize = 0;
-		std::vector<uint8_t> m_pool;
-		std::vector<EntityId> m_entitiesWithComponent;
-		std::unordered_map<EntityId, size_t> m_toEntityMap;
 	};
 
 	template<typename T>
-	inline T& ComponentPool::AddComponent(EntityId aId, T& aComponent)
+	class ComponentPool : public ComponentPoolBase
 	{
-		auto it = m_toEntityMap.find(aId);
-		assert(it == m_toEntityMap.end());
+	public:
+		ComponentPool() = default;
+		~ComponentPool() override;
 
-		size_t index = m_pool.size();
-		m_pool.resize(m_pool.size() + sizeof(T));
-		memcpy_s(&m_pool[index], sizeof(T), &aComponent, sizeof(T));
+		void* AddComponent(EntityId id, void* componentInitData) override;
+		void* GetComponent(EntityId id) override;
 
-		m_toEntityMap[aId] = index;
-		m_entitiesWithComponent.emplace_back(aId);
+		void RemoveComponent(EntityId id) override;
+		bool HasComponent(EntityId id) override;
 
-		return *reinterpret_cast<T*>(&m_pool[index]);
-	}
+		void SetOnCreateFunction(std::function<void(EntityId, void*)>& func) override;
+		void SetOnRemoveFunction(std::function<void(EntityId, void*)>& func) override;
 
-	inline void ComponentPool::RemoveComponent(EntityId aId)
+		void* GetAllComponents(EntityId id) override;
+		const std::vector<Wire::EntityId>& GetComponentView() const override;
+
+	private:
+		uint32_t m_componentSize = 0;
+		WireGUID m_guid = WireGUID::Null();
+
+		std::vector<T> m_pool;
+
+		std::vector<EntityId> m_entitiesWithComponent;
+		std::vector<size_t> m_freeSlots;
+
+		std::unordered_map<EntityId, size_t> m_toEntityMap;
+
+		std::function<void(EntityId, void*)> m_onCreate;
+		std::function<void(EntityId, void*)> m_onRemove;
+	};
+
+	template<typename T>
+	inline ComponentPool<T>::~ComponentPool()
+	{}
+
+	template<typename T>
+	inline void* ComponentPool<T>::AddComponent(EntityId id, void* componentInitData)
 	{
-		auto it = m_toEntityMap.find(aId);
-		assert(it != m_toEntityMap.end());
+		assert(!HasComponent(id));
 
-		const size_t lastComponentIndex = m_pool.size() - m_componentSize;
+		size_t slot = m_pool.size();
 
-		memcpy_s(&m_pool[it->second], m_componentSize, &m_pool[lastComponentIndex], m_componentSize);
-		m_pool.resize(m_pool.size() - m_componentSize);
-
-		for (auto& newIt : m_toEntityMap)
+		if (!m_freeSlots.empty())
 		{
-			if (newIt.second == lastComponentIndex)
-			{
-				newIt.second = it->second;
-				break;
-			}
+			slot = m_freeSlots.back();
+			m_freeSlots.pop_back();
 		}
 
-		m_entitiesWithComponent.erase(std::find(m_entitiesWithComponent.begin(), m_entitiesWithComponent.end(), aId));
-		m_toEntityMap.erase(it);
+		m_toEntityMap[id] = slot;
+		m_entitiesWithComponent.emplace_back(id);
+
+		if (slot == m_pool.size())
+		{
+			T& comp = m_pool.emplace_back();
+			if (componentInitData)
+			{
+				memcpy_s(&comp, sizeof(T), componentInitData, sizeof(T));
+			}
+
+			if (m_onCreate)
+			{
+				m_onCreate(id, &comp);
+			}
+			return &comp;
+		}
+
+		T& comp = m_pool.at(slot);
+		comp = T();
+
+		if (componentInitData)
+		{
+			memcpy_s(&comp, sizeof(T), componentInitData, sizeof(T));
+		}
+
+		if (m_onCreate)
+		{
+			m_onCreate(id, &comp);
+		}
+
+		return &comp;
 	}
 
 	template<typename T>
-	inline T& ComponentPool::GetComponent(EntityId aId)
+	inline void* ComponentPool<T>::GetComponent(EntityId id)
 	{
-		assert(HasComponent(aId));
-		return *reinterpret_cast<T*>(&m_pool.at(m_toEntityMap.at(aId)));
+		assert(HasComponent(id));
+		return (void*)&m_pool.at(m_toEntityMap.at(id));
 	}
 
-	inline std::vector<uint8_t> ComponentPool::GetComponentData(EntityId aId) const
+	template<typename T>
+	inline void ComponentPool<T>::RemoveComponent(EntityId id)
 	{
-		assert(HasComponent(aId));
-		std::vector<uint8_t> data;
-		data.resize(m_componentSize);
+		assert(HasComponent(id));
 
-		memcpy_s(data.data(), m_componentSize, &m_pool[m_toEntityMap.at(aId)], m_componentSize);
-		return data;
+		if (m_onRemove)
+		{
+			void* component = GetComponent(id);
+			m_onRemove(id, component);
+		}
+
+		auto entIt = std::find(m_entitiesWithComponent.begin(), m_entitiesWithComponent.end(), id);
+		m_entitiesWithComponent.erase(entIt);
+
+		auto mapIt = m_toEntityMap.find(id);
+		m_freeSlots.emplace_back(mapIt->second);
+		m_toEntityMap.erase(mapIt);
 	}
 
-	inline bool ComponentPool::HasComponent(EntityId aId) const
+	template<typename T>
+	inline bool ComponentPool<T>::HasComponent(EntityId id)
 	{
-		auto it = m_toEntityMap.find(aId);
-		return it != m_toEntityMap.end();
+		return std::find(m_entitiesWithComponent.begin(), m_entitiesWithComponent.end(), id) != m_entitiesWithComponent.end();
+	}
+
+	template<typename T>
+	inline void ComponentPool<T>::SetOnCreateFunction(std::function<void(EntityId, void*)>& func)
+	{
+		m_onCreate = func;
+	}
+
+	template<typename T>
+	inline void ComponentPool<T>::SetOnRemoveFunction(std::function<void(EntityId, void*)>& func)
+	{
+		m_onRemove = func;
+	}
+
+	template<typename T>
+	inline void* ComponentPool<T>::GetAllComponents(EntityId)
+	{
+		return m_pool.data();
+	}
+
+	template<typename T>
+	inline const std::vector<Wire::EntityId>& ComponentPool<T>::GetComponentView() const
+	{
+		return m_entitiesWithComponent;
 	}
 }

@@ -1,37 +1,26 @@
-project "Wire"
-	location "Wire"
-	kind "StaticLib"
-	language "C++"
-	cppdialect "C++17"
+workspace "Wire"
+	architecture "x64"
+	startproject "Test"
 
-	targetdir ("bin/" .. outputdir .."/%{prj.name}")
-	objdir ("bin-int/" .. outputdir .."/%{prj.name}")
-
-	files
+	configurations
 	{
-		"%{prj.name}/src/**.h",
-		"%{prj.name}/src/**.cpp",
-		"%{prj.name}/src/**.hpp",
+		"Debug",
+		"Release",
+		"Dist"
+	}
+	
+	flags
+	{
+		"MultiProcessorCompile"
 	}
 
-	includedirs
+	configmap
 	{
-		"%{prj.name}/src"
+		["GameOnlyDebug"] = "Release",
+		["SandboxOnlyDebug"] = "Release"
 	}
+	
+outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
-	filter "system:windows"
-		systemversion "latest"
-
-		filter "configurations:Debug"
-			defines { "LP_DEBUG", "LP_ENABLE_ASSERTS" }
-			runtime "Debug"
-			symbols "on"
-
-		filter "configurations:Release"
-			runtime "Release"
-			optimize "on"
-
-		filter "configurations:Dist"
-			defines { "LP_DIST", "NDEBUG" }
-			runtime "Release"
-			optimize "on"
+include "Test"
+include "Wire"
