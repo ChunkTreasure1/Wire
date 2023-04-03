@@ -17,7 +17,14 @@ project "Wire"
 
 	includedirs
 	{
-		"src"
+		"src",
+		"../../../src/"
+	}
+
+	configmap
+	{
+		["GameOnlyDebug"] = "Dist",
+		["SandboxOnlyDebug"] = "Dist"
 	}
 
 	filter "system:windows"
